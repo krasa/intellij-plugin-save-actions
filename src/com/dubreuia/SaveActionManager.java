@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.apache.log4j.Level;
@@ -31,6 +32,7 @@ public class SaveActionManager extends FileDocumentManagerAdapter {
 
     @Override
     public void beforeDocumentSaving(@NotNull Document document) {
+        System.err.println(document);
         for (Project project : ProjectManager.getInstance().getOpenProjects()) {
             PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
             if (isPsiFileEligible(project, psiFile)) {
@@ -46,6 +48,9 @@ public class SaveActionManager extends FileDocumentManagerAdapter {
      */
     private boolean isPsiFileEligible(Project project, PsiFile psiFile) {
         return psiFile != null &&
+                project.isInitialized() &&
+                !project.isDisposed() &&
+                ProjectRootManager.getInstance(project).getFileIndex().isInContent(psiFile.getVirtualFile()) &&
                 isPsiFileFocused(psiFile) &&
                 !isPsiFileExcluded(project, psiFile, storage.getExclusions());
     }
